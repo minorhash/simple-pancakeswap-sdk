@@ -21,7 +21,7 @@ export interface Token {
 #### Usage
 
 ```ts
-import { PancakeswapPair } from 'simple-pancakeswap-sdk';
+let PancakeswapPair=require('simple-pancakeswap-sdk');
 
 const pai= new PancakeswapPair({
   // the contract address of the token you want to convert FROM
@@ -33,10 +33,9 @@ const pai= new PancakeswapPair({
 });
 
 // now to create the factory you just do
-const pancakeswapPairFactory = await pai.createFactory();
-
-const toToken = PancakeswapPairFactory.toToken;
-console.log(toToken);
+const f = await pai.createFactory();
+let Ttok=f._pancakeswapPairFactoryContext.toToken
+console.log(Ttok);
 // toToken:
 {
   chainId: 56,
@@ -70,7 +69,7 @@ export interface Token {
 ```ts
 import { PancakeswapPair } from 'simple-pancakeswap-sdk';
 
-const pancakeswapPair = new PancakeswapPair({
+const pai = new PancakeswapPair({
   // the contract address of the token you want to convert FROM
   fromTokenContractAddress: '0x101d82428437127bf1608f699cd651e6abf9766e',
   // the contract address of the token you want to convert TO
@@ -80,10 +79,9 @@ const pancakeswapPair = new PancakeswapPair({
 });
 
 // now to create the factory you just do
-const pancakeswapPairFactory = await PancakeswapPair.createFactory();
-
-const fromToken = PancakeswapPairFactory.fromToken;
-console.log(fromToken);
+const f = await pai.createFactory();
+let Ftok=f._pancakeswapPairFactoryContext.fromToken
+console.log(Ftok);
 // fromToken:
 {
   chainId: 56,
