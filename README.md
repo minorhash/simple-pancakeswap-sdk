@@ -1,167 +1,3 @@
-# simple-pancakeswap-sdk
-
-[![npm version](https://badge.fury.io/js/simple-pancakeswap-sdk.svg)](https://badge.fury.io/js/simple-pancakeswap-sdk)
-![downloads](https://img.shields.io/npm/dw/simple-pancakeswap-sdk)
-
-Pancakeswap SDK which handles the routes automatically for you, changes in trade quotes reactive subscriptions, exposure to formatted easy to understand information, bringing back the best trade quotes automatically, generating transactions for you and much more. All the pancakeswap logic for you in a simple to easy understand interface to hook straight into your dApp without having to understand how it all works.
-
-Please note this is not owned or maintained by pancakeswap and is a open source package for anyone to use freely.
-
-## Features 🚀
-
-🚀 Queries all the best routes and finds the best price for you
-<br/>
-🚀 Exposes all the route paths it tried so you can see every detail in how it worked out the best price
-<br/>
-🚀 Easy subscriptions to get alerted when the price moves or the trade expires
-<br/>
-🚀 The transaction is generated for you, just fill it with the gas details and send it on its way
-<br/>
-🚀 All the figures are all formatted for you, no need to worry about timing it back to its decimal formatted place, just render it straight onto your UI
-<br/>
-🚀 Exposes all the tokens metadata for you, name, symbol, decimals
-<br/>
-🚀 Uses [multicall](https://github.com/joshstevens19/ethereum-multicall) for every on chain lookup, so even though it could be doing 100 JSONRPC calls it is all put into a few calls meaning it can stay very fast
-<br/>
-🚀 Tidy bundle size
-<br/>
-🚀 Fully typescript supported with full generated typings
-<br/>
-🚀 Other cool internal stuff exposed for your use
-<br/>
-
-- 🚀query many tokens in 1 jsonrpc call perfect to get token metadata fast
-  <br/>
-- 🚀all the pancakeswap contracts are all exposed for your use with full typings if you wanted to call a more bespoke method
-  <br/>
-- 🚀 and much more!!
-
-# Motivation
-
-As a ethereum dApp developer you try to get your dApp experience as integrated as possible, Ethereum right now is hard to show in a web2.0 world as it is. On top of this as a developer you have to learn all the complex stuff for the blockchain which can take its toll on you.
-
-When I was integrating pancakeswap on our wallet I found that their `SDK` was a bit too much for what I needed. Deepdown from the dApp point of view I only really cared about getting the best price for the user with all the fees related. I also found myself having to write a lot of custom code which I thought could be abstracted away so nobody has to deal with that again. A lot of the pancakeswap features like routing is all done in their client itself which is great but not when you want to use it in a more integrated approach in your on dApp.
-
-My motivation here is to create a library which allows more people to integrate it on their dApp without having to worry about how their amazing software links together. This makes the whole user experience better and allows more developers to get involved integrating pancakeswap in their dApp with a web2.0 experience, and on top of this also growing the usage of it.
-
-# Installing
-
-## npm
-
-```bash
-$ npm install simple-pancakeswap-sdk
-```
-
-## yarn
-
-```bash
-$ yarn add simple-pancakeswap-sdk
-```
-
-# SDK guide
-
-## Creating a pancakeswap pair factory
-
-The pancakeswap pair factory is an instance which is joint together with the `from` token and the `to` token, it is all self contained in the instance and exposes easy methods for you to call to start using pancakeswap.
-
-```ts
-export class PancakeswapPair {
-  constructor(
-    private _pancakeswapPairContext: PancakeswapPairContext
-)
-```
-
-```ts
-export interface PancakeswapPairContext {
-  fromTokenContractAddress: string;
-  toTokenContractAddress: string;
-  ethereumAddress: string;
-  settings?: PancakeswapPairSettings | undefined;
-}
-```
-
-```ts
-export class PancakeswapPairSettings {
-  slippage: number;
-  deadlineMinutes: number;
-  disableMultihops: boolean;
-
-  constructor(settings?: {
-    slippage?: number | undefined;
-    deadlineMinutes?: number | undefined;
-    disableMultihops?: boolean | undefined;
-  }) {
-    this.slippage = settings?.slippage || 0.005;
-    this.deadlineMinutes = settings?.deadlineMinutes || 20;
-    this.disableMultihops = settings?.disableMultihops || false;
-  }
-}
-```
-
-```ts
-import { PancakeswapPair } from 'simple-pancakeswap-sdk';
-
-const pancakeswapPair = new PancakeswapPair({
-  // the contract address of the token you want to convert FROM
-  fromTokenContractAddress: '0x101d82428437127bf1608f699cd651e6abf9766e',
-  // the contract address of the token you want to convert TO
-  toTokenContractAddress: '0xBf5140A22578168FD562DCcF235E5D43A02ce9B1',
-  // the ethereum address of the user using this part of the dApp
-  ethereumAddress: '0xB1E6079212888f0bE0cf55874B2EB9d7a5e02cD9',
-  // you can pass in the provider url as well if you want
-  // providerUrl: YOUR_PROVIDER_URL,
-  settings: new PancakeswapPairSettings({
-    // if not supplied it will use `0.005` which is 0.5%
-    // please pass it in as a full number decimal so 0.7%
-    // would be 0.007
-    slippage: 0.005,
-    // if not supplied it will use 20 a deadline minutes
-    deadlineMinutes: 20,
-    // if not supplied it will try to use multihops
-    // if this is true it will require swaps to direct
-    // pairs
-    disableMultihops: false,
-  }),
-});
-
-// now to create the factory you just do
-const pancakeswapPairFactory = await PancakeswapPair.createFactory();
-```
-
-## Catching error
-
-I know randomly throwing errors with no error codes is a pain when writing dApps. In this package when we throw we have our own custom error. This has error codes you can map to what actually happened to allow your dApp to handle them gracefully.
-
-```ts
-export class PancakeswapError extends Error {
-  public name = 'PancakeswapError';
-  public code: ErrorCodes;
-  public message: string;
-  constructor(message: string, code: ErrorCodes) {
-    super(message);
-    this.message = message;
-    this.code = code;
-  }
-}
-```
-
-```ts
-export enum ErrorCodes {
-  noRoutesFound = 1,
-  canNotFindChainId = 2,
-  tokenChainIdContractDoesNotExist = 3,
-  tradePathIsNotSupported = 4,
-  generateApproveMaxAllowanceDataNotAllowed = 5,
-  fromTokenContractAddressRequired = 6,
-  fromTokenContractAddressNotValid = 7,
-  toTokenContractAddressRequired = 8,
-  toTokenContractAddressNotValid = 9,
-  ethereumAddressRequired = 10,
-  ethereumAddressNotValid = 11,
-  invalidFromOrToContractToken = 13,
-}
-```
-
 ## Pancakeswap pair factory
 
 ### toToken
@@ -187,7 +23,7 @@ export interface Token {
 ```ts
 import { PancakeswapPair } from 'simple-pancakeswap-sdk';
 
-const pancakeswapPair = new PancakeswapPair({
+const pai= new PancakeswapPair({
   // the contract address of the token you want to convert FROM
   fromTokenContractAddress: '0x101d82428437127bf1608f699cd651e6abf9766e',
   // the contract address of the token you want to convert TO
@@ -197,7 +33,7 @@ const pancakeswapPair = new PancakeswapPair({
 });
 
 // now to create the factory you just do
-const pancakeswapPairFactory = await PancakeswapPair.createFactory();
+const pancakeswapPairFactory = await pai.createFactory();
 
 const toToken = PancakeswapPairFactory.toToken;
 console.log(toToken);
